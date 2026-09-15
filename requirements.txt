@@ -1,0 +1,5 @@
+# 接口测试直接依赖（版本与开发环境实测一致，避免后续版本漂移）
+pytest==9.1.1
+requests==2.34.2
+allure-pytest==2.16.0
+pytest-html==4.2.0

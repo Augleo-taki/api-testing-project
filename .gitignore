@@ -1,0 +1,26 @@
+# ===== Python 缓存与编译产物 =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ===== 虚拟环境 =====
+.venv/
+venv/
+env/
+
+# ===== pytest 缓存 =====
+.pytest_cache/
+
+# ===== IDE / 编辑器 =====
+.idea/
+.vscode/
+
+# ===== 测试报告产物（每次运行自动生成，不入库）=====
+tests/reports/allure/
+tests/reports/allure-report/
+tests/reports/assets/
+tests/reports/test_report.html
+reports/
+
+# ===== 日志文件 =====
+*.log
