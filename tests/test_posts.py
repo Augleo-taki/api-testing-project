@@ -1,56 +1,26 @@
 # -*- coding: utf-8 -*-
-"""文章（/posts）接口测试用例。"""
+"""文章（/posts）接口测试：YAML 数据驱动 + 参数化。"""
 
+import allure
 import pytest
 
+from utils.allure_helper import apply_case_labels
+from utils.case_runner import run_case
+from utils.data_loader import load_yaml
 
-def test_get_all_posts(http_client, base_url):
-    """测试获取所有文章"""
-    response = http_client.get(f"{base_url}/posts")
-    assert response.status_code == 200
-    assert len(response.json()) > 0
-
-
-def test_get_single_post(http_client, base_url):
-    """测试获取单个文章"""
-    post_id = 1
-    response = http_client.get(f"{base_url}/posts/{post_id}")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["id"] == post_id
-    assert "title" in data
+# 模块加载时读取用例数据（parametrize 需要在收集阶段拿到）
+posts_cases = load_yaml("data/posts_cases.yaml")
 
 
-def test_create_post(http_client, base_url):
-    """测试创建文章"""
-    new_post = {
-        "title": "Test Title",
-        "body": "This is a test post",
-        "userId": 1
-    }
-    response = http_client.post(f"{base_url}/posts", json=new_post)
-    assert response.status_code == 201
-    data = response.json()
-    assert data["title"] == new_post["title"]
-
-
-def test_update_post(http_client, base_url):
-    """测试更新文章"""
-    post_id = 1
-    updated_post = {
-        "id": post_id,
-        "title": "Updated Title",
-        "body": "Updated content",
-        "userId": 1
-    }
-    response = http_client.put(f"{base_url}/posts/{post_id}", json=updated_post)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["title"] == updated_post["title"]
-
-
-def test_delete_post(http_client, base_url):
-    """测试删除文章"""
-    post_id = 1
-    response = http_client.delete(f"{base_url}/posts/{post_id}")
-    assert response.status_code == 200
+@allure.epic("接口自动化测试")
+@allure.feature("文章 Posts 接口")
+class TestPosts:
+    @pytest.mark.parametrize(
+        "case",
+        posts_cases,
+        ids=[case["case_id"] for case in posts_cases],
+    )
+    def test_posts_api(self, http_client, base_url, case):
+        # 每条参数化用例动态生成 Allure 标题与严重级
+        apply_case_labels(case)
+        run_case(http_client, base_url, case)

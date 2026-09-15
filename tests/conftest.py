@@ -1,28 +1,73 @@
 # -*- coding: utf-8 -*-
-"""pytest 公共夹具（fixtures）。
+"""pytest 公共夹具与钩子。
 
-注意：fixture 不需要在用例文件里 import，
-pytest 会按参数名自动把 fixture 注入到用例函数中。
+运行环境通过命令行切换：
+    pytest                  # 默认 prod（jsonplaceholder）
+    pytest --env=dev        # 切到本地 FastAPI（阶段 2 启用）
 """
+
+import sys
+from pathlib import Path
 
 import pytest
 
+from config.config_manager import load_config
 from utils.http_client import HttpClient
 
 
+def pytest_addoption(parser):
+    """注册 --env 命令行参数。"""
+    parser.addoption(
+        "--env",
+        action="store",
+        default="prod",
+        help="运行环境，对应 config/env 下的配置文件名，默认 prod",
+    )
+
+
 @pytest.fixture(scope="session")
-def base_url() -> str:
-    """被测服务基础地址（常量，整个测试会话只创建一次）。"""
-    return "https://jsonplaceholder.typicode.com"
+def env_config(request):
+    """加载当前运行环境配置（整个会话只加载一次）。"""
+    env_name = request.config.getoption("--env")
+    return load_config(env_name)
+
+
+@pytest.fixture(scope="session")
+def base_url(env_config) -> str:
+    """被测服务基础地址，来源于环境配置。"""
+    return env_config["base_url"]
 
 
 @pytest.fixture
-def http_client(base_url: str) -> HttpClient:
-    """提供统一 HTTP 客户端：默认 (5s 连接, 10s 读取) 双超时，自动记录请求日志。
-
-    函数级作用域：每个用例拿到独立客户端，用例之间互不影响；
-    用例结束后自动关闭底层连接。
-    """
-    client = HttpClient(base_url=base_url)
+def http_client(env_config) -> HttpClient:
+    """统一 HTTP 客户端：超时时间由环境配置决定，用例后自动关闭。"""
+    client = HttpClient(
+        base_url=env_config["base_url"],
+        timeout=env_config["timeout"],
+    )
     yield client
     client.close()
+
+
+def pytest_sessionstart(session):
+    """会话开始时把环境信息写入 Allure 结果目录（报告首页展示）。
+
+    注意：必须在 sessionstart 而非 configure 阶段写入——Allure 的
+    --clean-alluredir 清空动作发生在 configure 阶段，写早了会被清掉。
+    """
+    config = session.config
+    # allure-pytest 注册的选项 dest 为 allure_report_dir（不是 alluredir）
+    allure_dir = getattr(config.option, "allure_report_dir", None)
+    if not allure_dir:
+        return
+
+    env_name = config.option.env
+    cfg = load_config(env_name)
+    out_dir = Path(allure_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    content = (
+        f"Environment={cfg['env_name']}\n"
+        f"Base.URL={cfg['base_url']}\n"
+        f"Python={sys.version.split()[0]}\n"
+    )
+    (out_dir / "environment.properties").write_text(content, encoding="utf-8")

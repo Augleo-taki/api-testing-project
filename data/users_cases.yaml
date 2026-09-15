@@ -1,0 +1,103 @@
+# 用户接口用例数据（正向 + 边界 + 负向）
+
+# ============ 正向用例 ============
+- case_id: users_list_success
+  title: 正向-查询用户列表，返回全部10条且结构正确
+  severity: critical
+  method: GET
+  path: /users
+  expected:
+    status_code: 200
+    schema: user_list
+    length: 10
+
+- case_id: users_single_success
+  title: 正向-查询单个存在的用户，嵌套结构(地址/公司)完整正确
+  severity: critical
+  method: GET
+  path: /users/1
+  expected:
+    status_code: 200
+    schema: user
+    exact:
+      id: 1
+      username: Bret
+
+- case_id: users_filter_hit
+  title: 正向-按用户名精确过滤命中1条
+  severity: normal
+  method: GET
+  path: /users
+  params:
+    username: Bret
+  expected:
+    status_code: 200
+    length: 1
+    each_equals:
+      username: Bret
+
+- case_id: users_create_success
+  title: 正向-创建用户成功并回显姓名
+  severity: critical
+  method: POST
+  path: /users
+  body:
+    name: "Test User"
+    username: "testuser"
+    email: "test@example.com"
+    address:
+      street: "Kulas Light"
+      suite: "Apt. 556"
+      city: "Gwenborough"
+      zipcode: "92998-3874"
+      geo:
+        lat: "-37.3159"
+        lng: "81.1496"
+    phone: "1-770-736-8031 x56442"
+    website: "hildegard.org"
+    company:
+      name: "Romaguera-Crona"
+      catchPhrase: "Multi-layered client-server neural-net"
+      bs: "harness real-time e-markets"
+  expected:
+    status_code: 201
+    exact:
+      name: "Test User"
+
+# ============ 边界值 / 负向用例 ============
+- case_id: users_filter_miss_empty
+  title: 负向-按不存在的用户名过滤，返回200与空列表
+  severity: normal
+  method: GET
+  path: /users
+  params:
+    username: not_exist_user_xxx
+  expected:
+    status_code: 200
+    length: 0
+
+- case_id: users_id_zero_not_found
+  title: 边界-ID取0返回404
+  severity: minor
+  method: GET
+  path: /users/0
+  expected:
+    status_code: 404
+
+- case_id: users_id_huge_not_found
+  title: 边界-ID超出范围(999999)返回404
+  severity: minor
+  method: GET
+  path: /users/999999
+  expected:
+    status_code: 404
+
+- case_id: users_create_empty_body
+  title: 特性-空请求体创建用户也返回201(服务端未校验必填)
+  severity: trivial
+  method: POST
+  path: /users
+  body: {}
+  expected:
+    status_code: 201
+    contains_key: id

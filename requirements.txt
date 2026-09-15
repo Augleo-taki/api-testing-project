@@ -4,3 +4,5 @@ requests==2.34.2
 allure-pytest==2.16.0
 pytest-html==4.2.0
 pytest-rerunfailures==16.6.1
+PyYAML==6.0.3
+jsonschema==4.26.0

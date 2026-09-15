@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "文章列表",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "required": ["userId", "id", "title", "body"],
+    "properties": {
+      "userId": { "type": "integer", "minimum": 1 },
+      "id": { "type": "integer", "minimum": 1 },
+      "title": { "type": "string" },
+      "body": { "type": "string" }
+    },
+    "additionalProperties": false
+  }
+}

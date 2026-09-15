@@ -1,0 +1,165 @@
+# 文章接口用例数据（正向 + 边界 + 负向）
+# 字段说明：case_id 用例ID | title 报告标题 | severity 严重级 | method/path 请求
+#           params 查询参数 | body 请求体 | expected 断言集合
+
+# ============ 正向用例 ============
+- case_id: posts_list_success
+  title: 正向-查询文章列表，返回全部100条且结构正确
+  severity: critical
+  method: GET
+  path: /posts
+  expected:
+    status_code: 200
+    schema: post_list
+    length: 100
+
+- case_id: posts_single_success
+  title: 正向-查询单篇存在的文章，字段与结构正确
+  severity: critical
+  method: GET
+  path: /posts/1
+  expected:
+    status_code: 200
+    schema: post
+    exact:
+      id: 1
+      userId: 1
+
+- case_id: posts_filter_by_user
+  title: 正向-按userId过滤文章，每条结果的userId都等于筛选值
+  severity: normal
+  method: GET
+  path: /posts
+  params:
+    userId: 1
+  expected:
+    status_code: 200
+    schema: post_list
+    min_length: 1
+    each_equals:
+      userId: 1
+
+- case_id: posts_pagination
+  title: 正向-分页查询 _limit=5 时恰好返回5条
+  severity: normal
+  method: GET
+  path: /posts
+  params:
+    _start: 0
+    _limit: 5
+  expected:
+    status_code: 200
+    length: 5
+
+- case_id: posts_create_success
+  title: 正向-创建文章成功并回显提交内容
+  severity: critical
+  method: POST
+  path: /posts
+  body:
+    title: "阶段1测试标题"
+    body: "阶段1测试正文"
+    userId: 1
+  expected:
+    status_code: 201
+    exact:
+      title: "阶段1测试标题"
+
+- case_id: posts_put_full_update
+  title: 正向-PUT整体更新文章成功
+  severity: normal
+  method: PUT
+  path: /posts/1
+  body:
+    id: 1
+    title: "PUT更新后的标题"
+    body: "PUT更新后的正文"
+    userId: 1
+  expected:
+    status_code: 200
+    exact:
+      id: 1
+      title: "PUT更新后的标题"
+
+- case_id: posts_patch_partial_update
+  title: 正向-PATCH部分更新，只改title且返回新值
+  severity: normal
+  method: PATCH
+  path: /posts/1
+  body:
+    title: "patched-title"
+  expected:
+    status_code: 200
+    exact:
+      id: 1
+      title: "patched-title"
+
+- case_id: posts_delete_success
+  title: 正向-删除文章成功
+  severity: critical
+  method: DELETE
+  path: /posts/1
+  expected:
+    status_code: 200
+
+# ============ 边界值 / 负向用例（基于接口真实行为设计）============
+- case_id: posts_id_zero_not_found
+  title: 边界-ID取0属于无效值，返回404
+  severity: minor
+  method: GET
+  path: /posts/0
+  expected:
+    status_code: 404
+
+- case_id: posts_id_negative_not_found
+  title: 边界-ID取负数返回404
+  severity: minor
+  method: GET
+  path: /posts/-1
+  expected:
+    status_code: 404
+
+- case_id: posts_id_non_numeric_not_found
+  title: 负向-ID为非数字字符串返回404
+  severity: minor
+  method: GET
+  path: /posts/abc
+  expected:
+    status_code: 404
+
+- case_id: posts_id_huge_not_found
+  title: 边界-ID超出数据范围(999999)返回404
+  severity: minor
+  method: GET
+  path: /posts/999999
+  expected:
+    status_code: 404
+
+- case_id: posts_filter_no_result
+  title: 负向-条件过滤无匹配时返回200与空列表(区别于路径404)
+  severity: normal
+  method: GET
+  path: /posts
+  params:
+    userId: 999999
+  expected:
+    status_code: 200
+    length: 0
+
+- case_id: posts_delete_not_exist_idempotent
+  title: 特性-删除不存在的资源仍返回200(删除幂等)
+  severity: trivial
+  method: DELETE
+  path: /posts/999999
+  expected:
+    status_code: 200
+
+- case_id: posts_create_empty_body
+  title: 特性-空请求体创建也返回201(服务端未校验必填,记录为需求疑点)
+  severity: trivial
+  method: POST
+  path: /posts
+  body: {}
+  expected:
+    status_code: 201
+    contains_key: id

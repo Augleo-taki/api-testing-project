@@ -1,51 +1,24 @@
 # -*- coding: utf-8 -*-
-"""用户（/users）接口测试用例。"""
+"""用户（/users）接口测试：YAML 数据驱动 + 参数化。"""
 
+import allure
 import pytest
 
+from utils.allure_helper import apply_case_labels
+from utils.case_runner import run_case
+from utils.data_loader import load_yaml
 
-def test_get_all_users(http_client, base_url):
-    """测试获取所有用户"""
-    response = http_client.get(f"{base_url}/users")
-    assert response.status_code == 200
-    assert len(response.json()) > 0
-
-
-def test_get_single_user(http_client, base_url):
-    """测试获取单个用户"""
-    user_id = 1
-    response = http_client.get(f"{base_url}/users/{user_id}")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["id"] == user_id
-    assert "name" in data
+users_cases = load_yaml("data/users_cases.yaml")
 
 
-def test_create_user(http_client, base_url):
-    """测试创建用户"""
-    new_user = {
-        "name": "Test User",
-        "username": "testuser",
-        "email": "test@example.com",
-        "address": {
-            "street": "Kulas Light",
-            "suite": "Apt. 556",
-            "city": "Gwenborough",
-            "zipcode": "92998-3874",
-            "geo": {
-                "lat": "-37.3159",
-                "lng": "81.1496"
-            }
-        },
-        "phone": "1-770-736-8031 x56442",
-        "website": "hildegard.org",
-        "company": {
-            "name": "Romaguera-Crona",
-            "catchPhrase": "Multi-layered client-server neural-net",
-            "bs": "harness real-time e-markets"
-        }
-    }
-    response = http_client.post(f"{base_url}/users", json=new_user)
-    assert response.status_code == 201
-    data = response.json()
-    assert data["name"] == new_user["name"]
+@allure.epic("接口自动化测试")
+@allure.feature("用户 Users 接口")
+class TestUsers:
+    @pytest.mark.parametrize(
+        "case",
+        users_cases,
+        ids=[case["case_id"] for case in users_cases],
+    )
+    def test_users_api(self, http_client, base_url, case):
+        apply_case_labels(case)
+        run_case(http_client, base_url, case)
