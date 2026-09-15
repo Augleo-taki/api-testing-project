@@ -18,9 +18,16 @@ logger = logging.getLogger("http_client")
 class HttpClient:
     """对 requests.Session 的薄封装，方法签名与 requests 保持一致。"""
 
-    def __init__(self, base_url: str = "", timeout: float = 10.0):
+    def __init__(
+        self,
+        base_url: str = "",
+        timeout: "float | tuple[float, float]" = (5.0, 10.0),
+    ):
         # base_url 允许为空：此时请求时需传入完整 URL（当前用例的写法）
         self.base_url = base_url.rstrip("/")
+        # requests 的 timeout 支持元组：(连接超时, 读取超时)
+        # 连接超时：建立 TCP/TLS 连接的最长等待（你遇到的握手卡住就归它管）
+        # 读取超时：服务器两次响应数据包之间的最长间隔
         self.timeout = timeout
         self._session = requests.Session()
 

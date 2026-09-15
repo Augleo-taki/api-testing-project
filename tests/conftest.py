@@ -18,11 +18,11 @@ def base_url() -> str:
 
 @pytest.fixture
 def http_client(base_url: str) -> HttpClient:
-    """提供统一 HTTP 客户端：默认 10s 超时，自动记录请求日志。
+    """提供统一 HTTP 客户端：默认 (5s 连接, 10s 读取) 双超时，自动记录请求日志。
 
     函数级作用域：每个用例拿到独立客户端，用例之间互不影响；
     用例结束后自动关闭底层连接。
     """
-    client = HttpClient(base_url=base_url, timeout=10.0)
+    client = HttpClient(base_url=base_url)
     yield client
     client.close()
