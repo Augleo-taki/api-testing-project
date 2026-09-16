@@ -7,6 +7,7 @@
 """
 
 import sys
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -39,8 +40,12 @@ def base_url(env_config) -> str:
 
 
 @pytest.fixture
-def http_client(env_config) -> HttpClient:
-    """统一 HTTP 客户端：超时时间由环境配置决定，用例后自动关闭。"""
+def http_client(env_config) -> Generator[HttpClient, None, None]:
+    """统一 HTTP 客户端：超时时间由环境配置决定，用例后自动关闭。
+
+    含 yield 的 fixture 本质是生成器函数：yield 产出客户端供用例使用，
+    yield 之后的 close() 在用例结束后执行清理，故返回类型标注为 Generator。
+    """
     client = HttpClient(
         base_url=env_config["base_url"],
         timeout=env_config["timeout"],
