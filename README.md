@@ -163,16 +163,31 @@ allure serve tests/reports/allure
 
 ## Docker 一键启动被测服务
 
+容器用于**一键部署与接口级验证**（环境一致、无需本地配置）：
+
 ```bash
 docker compose up -d --build          # 构建并后台启动服务（映射到本机 8000 端口）
-docker compose ps                     # 查看状态与健康检查
-# 服务就绪后，在宿主机跑本地用例（框架检测到端口被占用会复用容器服务）：
-pytest --env=dev
+docker compose ps                     # STATUS 变为 healthy 即就绪
+# 接口级验证（浏览器或 curl）：
+#   http://127.0.0.1:8000/health  -> {"status":"ok"}
+#   http://127.0.0.1:8000/docs    -> Swagger 接口文档
+#   http://127.0.0.1:8000/posts   -> 2 篇种子文章
 docker compose down                   # 停止并移除容器
 ```
 
-> 说明：当前镜像只打包被测服务（`app/`），测试在宿主机运行；测试框架的"端口已占用则复用"
-> 设计正好用于对接容器。生产级做法可再增加一个测试镜像，在 Compose 网络内用服务名通信。
+> **容器与数据库隔离说明（重要）**：当前镜像只打包被测服务（`app/`），数据落在容器内的
+> SQLite 文件 `/app/test_app.db`。因此在宿主机直接 `pytest --env=dev` 复用容器时，纯 HTTP 断言
+> 用例都能通过，但两条「响应 + DB 双断言」用例会因宿主机 `DBInspector` 连不到容器内的库而失败——
+> 这是 SQLite 文件型数据库 + 容器文件系统隔离导致的**预期现象，不是缺陷**。
+>
+> 两种场景的正确跑法：
+> - **验证容器部署**：用上面的 `/health`、`/docs` 与 HTTP 接口（注册 / 登录 / 发文）确认服务可用；
+> - **跑完整自动化套件（含 DB 双断言，40 passed）**：停掉容器后执行 `pytest --env=dev`，
+>   框架会自动拉起本地 uvicorn，服务与测试共享同一个 SQLite 文件（GitHub CI 同构）。
+>
+> **生产级容器化集成测试**（后续拓展方向）：用 Compose 编排独立数据库容器（如 PostgreSQL）+
+> 被测服务 + 一次性测试容器，三者在 Compose 网络内以服务名通信、测试经网络连库做断言，
+> 即可在完全容器化的环境下保留 DB 双校验。
 
 ## 框架设计说明
 
