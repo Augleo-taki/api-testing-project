@@ -1,0 +1,49 @@
+# 持续集成：推送 / 合并请求时自动运行测试
+name: API Tests CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 查看用例收集情况
+        run: pytest --collect-only -q
+
+      # 本地被测服务用例 + Mock + 单元测试：
+      # pytest 会自动拉起 uvicorn 子进程，跑完自动关闭，无需手动启动服务
+      - name: 运行本地服务测试（dev：local + mock + unit）
+        run: pytest --env=dev --alluredir=allure-results
+
+      # 外网公共 API 用例（与本地用例互斥，避免重复执行 mock/unit）
+      - name: 运行外网接口测试（prod）
+        run: pytest -m "not local and not mock and not unit"
+
+      # 即使上面有失败也上传 Allure 原始结果，便于排查
+      - name: 上传 Allure 结果产物
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+          if-no-files-found: ignore
+          retention-days: 14

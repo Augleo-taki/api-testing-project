@@ -1,0 +1,21 @@
+# 一键启动被测服务：docker compose up -d --build
+# 启动后服务在 http://127.0.0.1:8000 ，文档 http://127.0.0.1:8000/docs
+# 测试仍在宿主机运行：pytest --env=dev
+# （框架检测到 8000 端口已被容器占用，会直接复用容器中的服务，不再重复拉起）
+services:
+  api:
+    build: .
+    image: api-testing-service:latest
+    container_name: api-testing-service
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 10

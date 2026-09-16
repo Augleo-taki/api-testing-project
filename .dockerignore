@@ -1,0 +1,33 @@
+# 版本控制与本地环境
+.git
+.github
+.gitignore
+.vscode/
+.venv/
+venv/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 测试框架、用例与报告（服务镜像只需要 app/ 运行被测服务）
+tests/
+data/
+config/
+schemas/
+utils/
+allure-results/
+tests/reports/
+reports/
+
+# 运行时数据库与本地配置
+*.db
+*.sqlite*
+.vscode/
+*.log
+
+# 容器自身文件
+Dockerfile
+docker-compose.yml
+.dockerignore

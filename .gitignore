@@ -29,3 +29,6 @@ reports/
 *.db
 *.sqlite
 *.sqlite3
+
+# ===== CI / 本地生成的 Allure 原始结果 =====
+/allure-results/

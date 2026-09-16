@@ -37,14 +37,26 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
-    """按环境自动分流用例：带 local 标记的只在 dev 跑，其余只在 prod 跑。"""
+    """按环境自动分流用例。
+
+    标记：local（依赖本地 FastAPI 服务）、mock（HTTP 打桩）、unit（纯单元测试）。
+    - dev：运行 local + mock + unit（外网用例跳过）
+    - prod（默认）：运行外网无标记用例 + mock + unit（local 跳过）
+    mock/unit 不依赖任何真实环境，两种环境下都运行。
+    """
     env = config.getoption("--env")
-    local_items = {item for item in items if item.get_closest_marker("local")}
+
+    def has_marker(item, name):
+        return item.get_closest_marker(name) is not None
 
     if env == "dev":
-        deselected = [item for item in items if item not in local_items]
+        deselected = [
+            item
+            for item in items
+            if not any(has_marker(item, m) for m in ("local", "mock", "unit"))
+        ]
     else:
-        deselected = [item for item in items if item in local_items]
+        deselected = [item for item in items if has_marker(item, "local")]
 
     if deselected:
         config.hook.pytest_deselected(items=deselected)
