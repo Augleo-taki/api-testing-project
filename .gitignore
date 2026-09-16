@@ -4,9 +4,10 @@ __pycache__/
 *.egg-info/
 
 # ===== 虚拟环境 =====
+# 前导 / 锚定仓库根目录，避免 env/ 规则误伤 config/env/ 配置目录
 .venv/
-venv/
-env/
+/venv/
+/env/
 
 # ===== pytest 缓存 =====
 .pytest_cache/

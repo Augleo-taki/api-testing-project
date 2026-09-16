@@ -1,0 +1,6 @@
+# 本地开发环境：阶段 2 自建 FastAPI 被测服务后，用 pytest --env=dev 切换
+env_name: dev
+base_url: http://127.0.0.1:8000
+timeout:
+  connect: 2
+  read: 5

@@ -1,0 +1,7 @@
+# 生产/公共练习环境：JSONPlaceholder（默认环境）
+env_name: prod
+base_url: https://jsonplaceholder.typicode.com
+# (连接超时, 读取超时)，单位秒
+timeout:
+  connect: 5
+  read: 10
