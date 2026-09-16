@@ -74,5 +74,14 @@ class HttpClient:
     def delete(self, url_or_path: str, **kwargs) -> requests.Response:
         return self.request("DELETE", url_or_path, **kwargs)
 
+    def set_token(self, token: str) -> None:
+        """设置登录令牌，之后该客户端的所有请求自动携带
+        Authorization: Bearer <token>。"""
+        self._session.headers["Authorization"] = f"Bearer {token}"
+
+    def clear_auth(self) -> None:
+        """清除登录令牌，恢复为匿名客户端。"""
+        self._session.headers.pop("Authorization", None)
+
     def close(self) -> None:
         self._session.close()

@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "本地服务文章",
+  "type": "object",
+  "required": ["id", "title", "body", "author_id", "created_at"],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "body": { "type": "string", "minLength": 1 },
+    "author_id": { "type": "integer", "minimum": 1 },
+    "created_at": { "type": "string", "minLength": 8 }
+  },
+  "additionalProperties": false
+}
